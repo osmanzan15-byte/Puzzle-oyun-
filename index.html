@@ -2,26 +2,38 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f23">
 <title>Blok Bulmaca</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="bg"><i></i><i></i><i></i></div>
 <main id="app">
   <header>
-    <div class="stat"><span>SEVİYE</span><b id="level">1</b></div>
-    <div class="stat"><span>PUAN</span><b id="score">0</b></div>
-    <div class="stat"><span>EN İYİ</span><b id="best">0</b></div>
+    <div class="pill"><span>SEVİYE</span><b id="level">1</b></div>
+    <div class="pill big"><span>PUAN</span><b id="score">0</b></div>
+    <div class="pill"><span>EN İYİ</span><b id="best">0</b></div>
+    <button id="snd" aria-label="Ses" class="icon">🔊</button>
   </header>
   <div class="goal">
     <div class="bar"><i id="bar"></i></div>
-    <small>Hedef: <b id="target">0</b> puan</small>
+    <small>Hedef <b id="target">0</b> puan</small>
   </div>
-  <div id="board"></div>
+  <div id="boardwrap">
+    <div id="board"></div>
+    <div id="fx"></div>
+  </div>
   <div id="tray"></div>
-  <div id="intro"><div class="card"><h1>🧩 Blok Bulmaca</h1><p>Parçaları tahtaya sürükle, satır ve sütunları doldurup temizle. Her seviyede hedef puana ulaş!</p><button id="play">Oyna</button><button id="reset" class="sec">Baştan Başla</button></div></div>
-  <div id="msg" class="hidden"><div class="card"><h2 id="mt"></h2><p id="mp"></p><button id="mb"></button></div></div>
 </main>
+<div id="intro" class="overlay"><div class="card">
+  <div class="logo"><i></i><i></i><i></i><i></i></div>
+  <h1>Blok Bulmaca</h1>
+  <p>Parçaları tahtaya sürükle, satır ve sütunları doldurup temizle. Her seviyede hedef puana ulaş!</p>
+  <button id="play">Oyna</button>
+  <button id="reset" class="sec">Baştan Başla</button>
+</div></div>
+<div id="msg" class="overlay hidden"><div class="card"><h2 id="mt"></h2><p id="mp"></p><button id="mb"></button></div></div>
 <script src="game.js"></script>
 </body>
 </html>
