@@ -14,6 +14,7 @@ const save = (k, v) => { try { localStorage[k] = v } catch (e) {} };
 const load = (k, d) => { try { return +localStorage[k] || d } catch (e) { return d } };
 
 let grid, level, score = 0, shown = 0, best = load('best', 0), pieces, cfg, cells = [], drag = null, busy = false, combo = 0;
+let gain = load('sens', 1);
 let muted = (() => { try { return localStorage.mute === '1' } catch (e) { return false } })();
 
 /* ---------- ses ---------- */
@@ -140,7 +141,7 @@ function startDrag(e, i) {
   wrap.style.transform = `translate3d(${srcRect.left + srcRect.width / 2 - w / 2}px,${srcRect.top + srcRect.height / 2 - h / 2}px,0)`;
   el.style.transform = 'scale(.6)';
   void wrap.offsetWidth; wrap.style.transition = ''; el.style.transform = '';
-  drag = { i, p, wrap, w, h, r: -1, c: -1, id: e.pointerId, srcRect };
+  drag = { sx: e.clientX, sy: e.clientY, i, p, wrap, w, h, r: -1, c: -1, id: e.pointerId, srcRect };
   moveDrag(e);
   window.addEventListener('pointermove', moveDrag);
   window.addEventListener('pointerup', endDrag, { once: true });
@@ -150,10 +151,19 @@ function startDrag(e, i) {
 function moveDrag(e) {
   if (!drag) return;
   const { wrap, p, w, h } = drag, size = cs();
-  const x = e.clientX - w / 2, y = e.clientY - h - 46;
+  const px = drag.sx + (e.clientX - drag.sx) * gain, py = drag.sy + (e.clientY - drag.sy) * gain;
+  const x = px - w / 2, y = py - h - 46;
   wrap.style.transform = `translate3d(${x}px,${y}px,0)`;
   const b = cells[0].getBoundingClientRect();
-  const c = Math.round((x - b.left) / size), r = Math.round((y - b.top) / size);
+  const fc = (x - b.left) / size, fr = (y - b.top) / size;
+  let c = Math.round(fc), r = Math.round(fr);
+  if (!fits(p.s, r, c)) { // yakındaki geçerli kareye yapış (kolaylaştırma)
+    let bd = 1.6;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const rr = Math.round(fr) + dr, cc = Math.round(fc) + dc, dist = Math.hypot(rr - fr, cc - fc);
+      if (dist < bd && fits(p.s, rr, cc)) { bd = dist; r = rr; c = cc; }
+    }
+  }
   if (r !== drag.r || c !== drag.c) { drag.r = r; drag.c = c; preview(); }
 }
 
@@ -281,3 +291,8 @@ $('play').textContent = lv > 1 ? `Devam Et (Seviye ${lv})` : 'Oyna';
 $('reset').style.display = lv > 1 ? '' : 'none';
 $('play').onclick = () => { $('intro').classList.add('hidden'); tone(440, .1); };
 $('reset').onclick = () => { save('lvl', 1); startLevel(1); $('intro').classList.add('hidden'); };
+
+const sensBtns = [...document.querySelectorAll('#sens b')];
+const setSens = v => { gain = v; save('sens', v); sensBtns.forEach(b => b.classList.toggle('on', +b.dataset.v === v)); };
+sensBtns.forEach(b => b.onclick = () => setSens(+b.dataset.v));
+setSens(gain);
