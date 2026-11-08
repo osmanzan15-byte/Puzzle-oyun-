@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Blok Bulmaca</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <header>
+    <div class="stat"><span>SEVİYE</span><b id="level">1</b></div>
+    <div class="stat"><span>PUAN</span><b id="score">0</b></div>
+    <div class="stat"><span>EN İYİ</span><b id="best">0</b></div>
+  </header>
+  <div class="goal">
+    <div class="bar"><i id="bar"></i></div>
+    <small>Hedef: <b id="target">0</b> puan</small>
+  </div>
+  <div id="board"></div>
+  <div id="tray"></div>
+  <div id="msg" class="hidden"><div class="card"><h2 id="mt"></h2><p id="mp"></p><button id="mb"></button></div></div>
+</main>
+<script src="game.js"></script>
+</body>
+</html>

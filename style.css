@@ -1,0 +1,33 @@
+:root{--c:min(11vw,46px);--g:3px}
+*{box-sizing:border-box;touch-action:none;user-select:none;-webkit-user-select:none}
+body{margin:0;background:radial-gradient(circle at top,#2b2d5b,#12122b);color:#fff;font-family:system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
+#app{width:100%;max-width:440px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
+header{display:flex;gap:10px;width:100%}
+.stat{flex:1;background:#ffffff14;border-radius:12px;padding:6px;text-align:center}
+.stat span{display:block;font-size:10px;opacity:.6;letter-spacing:1px}
+.stat b{font-size:22px}
+.goal{width:100%;text-align:center}
+.bar{height:10px;background:#ffffff1f;border-radius:6px;overflow:hidden}
+#bar{display:block;height:100%;width:0;background:linear-gradient(90deg,#4cc9f0,#f72585);transition:width .3s}
+.goal small{opacity:.7}
+#board{display:grid;grid-template-columns:repeat(8,var(--c));gap:var(--g);padding:var(--g);background:#0006;border-radius:12px}
+.cell{width:var(--c);height:var(--c);border-radius:6px;background:#ffffff12}
+.cell.f{box-shadow:inset 0 -4px 0 #0004,inset 0 3px 0 #fff3}
+.cell.wall{background:#555;box-shadow:inset 0 0 0 3px #333}
+.cell.ok{outline:2px solid #fff;filter:brightness(1.5)}
+.cell.bad{background:#f444}
+.cell.clr{animation:clr .35s}
+@keyframes clr{50%{transform:scale(1.2);filter:brightness(2)}to{transform:scale(0)}}
+#tray{display:flex;justify-content:space-around;align-items:center;width:100%;height:calc(var(--c)*5.2)}
+.slot{width:calc(var(--c)*2.6);height:calc(var(--c)*4.6);display:flex;align-items:center;justify-content:center}
+.piece{display:grid;gap:var(--g);cursor:grab;transform:scale(.55);transform-origin:center}
+.piece.used{visibility:hidden}
+.piece.drag{position:fixed;z-index:9;pointer-events:none;transform:scale(1);margin:0}
+.piece .cell{width:var(--c);height:var(--c)}
+.piece .e{background:transparent;box-shadow:none}
+#msg{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20}
+#msg.hidden{display:none}
+.card{background:#25264d;border-radius:18px;padding:26px 30px;text-align:center;max-width:300px}
+.card h2{margin:0 0 8px;font-size:26px}
+.card p{margin:0 0 16px;opacity:.8}
+button{font-size:18px;padding:10px 26px;border:0;border-radius:12px;background:linear-gradient(90deg,#4cc9f0,#f72585);color:#fff;font-weight:700;cursor:pointer}
