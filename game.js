@@ -83,7 +83,7 @@ function hud() {
 function cellSize() { return cells[0].getBoundingClientRect().width + 3; }
 
 function startDrag(e, i, src) {
-  if (pieces[i].used || msgOpen()) return;
+  if (pieces[i].used || msgOpen() || !$('intro').classList.contains('hidden')) return;
   e.preventDefault();
   const p = pieces[i], el = pieceEl(p);
   el.classList.add('drag'); document.body.append(el);
@@ -161,3 +161,8 @@ function show(t, p, b, fn) {
 
 build();
 startLevel(Math.max(1, load('lvl', 1)));
+const lv = load('lvl', 1);
+$('play').textContent = lv > 1 ? `Devam Et (Seviye ${lv})` : 'Oyna';
+$('reset').style.display = lv > 1 ? '' : 'none';
+$('play').onclick = () => $('intro').classList.add('hidden');
+$('reset').onclick = () => { save('lvl', 1); startLevel(1); $('intro').classList.add('hidden'); };

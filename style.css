@@ -31,3 +31,8 @@ header{display:flex;gap:10px;width:100%}
 .card h2{margin:0 0 8px;font-size:26px}
 .card p{margin:0 0 16px;opacity:.8}
 button{font-size:18px;padding:10px 26px;border:0;border-radius:12px;background:linear-gradient(90deg,#4cc9f0,#f72585);color:#fff;font-weight:700;cursor:pointer}
+#intro{position:fixed;inset:0;background:radial-gradient(circle at top,#2b2d5b,#12122b);display:flex;align-items:center;justify-content:center;z-index:30}
+#intro.hidden{display:none}
+#intro h1{margin:0 0 12px;font-size:32px}
+#intro button{display:block;width:100%;margin-top:10px}
+button.sec{background:#ffffff22}
