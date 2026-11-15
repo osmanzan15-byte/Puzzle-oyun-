@@ -16,5 +16,7 @@ Seviyeli blok bulmaca oyunu (tarayıcıda çalışır, derleme gerekmez).
 - Toplayıcılar maden toplayıp rafineriye taşır (kredi).
 - Piyade, roketatar, tank üret; A* yol bulma, otomatik hedef alma.
 - Yapay zekâ rakip ekonomi kurar ve büyüyen saldırı dalgaları gönderir.
+- Savaş sisi: harita birimlerinle keşfedildikçe açılır, düşman görüş alanın dışında gizlenir.
+- Radar binası hava saldırısı özel gücünü açar (90 sn bekleme); yapay zekâ da kullanır.
 - Mini harita, kutu seçim, kontrol grupları (Ctrl+1-9), saldırarak ilerle (A), sat (X).
 - Kazanmak için rakibin tüm yapılarını yok et.

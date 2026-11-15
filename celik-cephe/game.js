@@ -10,6 +10,7 @@ const BDEF = {
   refinery: { name: 'Rafineri', w: 3, h: 2, hp: 700,  cost: 600, time: 600, power: -30, req: ['power'] },
   barracks: { name: 'Kışla',    w: 2, h: 2, hp: 550,  cost: 300, time: 420, power: -20, req: ['power'] },
   factory:  { name: 'Fabrika',  w: 3, h: 3, hp: 900,  cost: 800, time: 720, power: -40, req: ['refinery', 'barracks'] },
+  radar:    { name: 'Radar',    w: 2, h: 2, hp: 500,  cost: 800, time: 600, power: -40, req: ['factory'] },
   turret:   { name: 'Taret',    w: 1, h: 1, hp: 450,  cost: 400, time: 420, power: -15, req: ['barracks'],
               range: 220, dmg: 14, rate: 28, bsp: 12 },
 };
@@ -19,7 +20,8 @@ const UDEF = {
   tank:   { name: 'Tank',      hp: 300, speed: 1.9, cost: 700, time: 460, from: 'factory',  r: 13, range: 160, dmg: 32, rate: 50, bsp: 9,  splash: 28, heavy: true },
   harv:   { name: 'Toplayıcı', hp: 350, speed: 1.3, cost: 600, time: 560, from: 'factory',  r: 13, cap: 400, heavy: true },
 };
-const STRUCTS = ['power', 'refinery', 'barracks', 'factory', 'turret'];
+const STRUCTS = ['power', 'refinery', 'barracks', 'factory', 'radar', 'turret'];
+const STRIKE_CD = 5400;
 const UNITS = ['inf', 'rocket', 'tank', 'harv'];
 
 const $ = id => document.getElementById(id);
@@ -53,20 +55,21 @@ function snd(kind) {
 /* ---------------- oyun kurulumu ---------------- */
 function mkTeam(id) {
   return { id, credits: 2500, prodB: null, q: { barracks: [], factory: [] }, power: 0, used: 0, low: false,
-           ai: { wave: 0, next: 3600, size: 6, tick: 0 }, lastWarn: -9999 };
+           ai: { wave: 0, next: 3600, size: 6, tick: 0 }, lastWarn: -9999, strikeCd: 2400 };
 }
 
 function newGame() {
   const rnd = mulberry32((Date.now() & 0xffffff) ^ 0x5bd1e995);
   G = { tick: 0, units: [], blds: [], bullets: [], parts: [], terrain: new Uint8Array(MW * MH), ore: new Int16Array(MW * MH),
         occ: new Uint8Array(MW * MH), teams: [mkTeam(0), mkTeam(1)], sel: [], nextId: 1, over: null, placing: null,
-        groups: {}, msgs: [], rnd };
+        groups: {}, msgs: [], rnd, vis: new Uint8Array(MW * MH), strikes: [], targeting: false };
   genMap(rnd);
   const P = { x: 8, y: 44 }, E = { x: 68, y: 12 };
   setupBase(0, P.x, P.y, 1);
   setupBase(1, E.x, E.y, -1);
   cam.x = (P.x + 1.5) * TILE - canvas.width / 2; cam.y = (P.y + 1.5) * TILE - canvas.height / 2;
   clampCam();
+  updateFog();
   prerenderMini();
   msg('Üssünü kur, maden topla, ordunu üret!');
 }
@@ -473,6 +476,7 @@ function aiTick(T) {
     else if (br < 1) want = 'barracks';
     else if (rf < 2) want = 'refinery';
     else if (fa < 1) want = 'factory';
+    else if (cnt('radar') < 1 && T.credits > 1100) want = 'radar';
     else if (tu < 4) want = 'turret';
     else if (fa < 2 && T.credits > 1400) want = 'factory';
     else if (br < 2 && T.credits > 1000) want = 'barracks';
@@ -485,6 +489,11 @@ function aiTick(T) {
   if (hasB(id, 'factory') && harvs < Math.min(4, cnt('refinery') * 2)) queueUnit(id, 'harv');
   else if (hasB(id, 'factory') && T.q.factory.length < 2) queueUnit(id, 'tank');
   if (hasB(id, 'barracks') && T.q.barracks.length < 2) queueUnit(id, G.rnd() < 0.5 ? 'inf' : 'rocket');
+  if (strikeReady(id)) {
+    let best = null, bs = 0;
+    for (const b of G.blds) if (b.team !== id && !b.dead) { const sc = G.blds.filter(o => o.team === b.team && !o.dead && Math.hypot(o.x - b.x, o.y - b.y) < 120).length + (b.type === 'factory' ? 2 : 0); if (sc > bs) { bs = sc; best = b; } }
+    if (best && bs >= 2) callStrike(id, best.x, best.y);
+  }
   // saldırı dalgası
   const army = G.units.filter(u => u.team === id && !u.dead && u.type !== 'harv');
   const A = T.ai;
@@ -499,13 +508,55 @@ function aiTick(T) {
   }
 }
 
+/* ---------------- sis ve özel güç ---------------- */
+function updateFog() {
+  const V = G.vis;
+  for (let i = 0; i < V.length; i++) if (V[i] === 2) V[i] = 1;
+  const reveal = (x, y, r) => {
+    const cx = (x / TILE) | 0, cy = (y / TILE) | 0, rt = Math.ceil(r / TILE);
+    for (let dy = -rt; dy <= rt; dy++) for (let dx = -rt; dx <= rt; dx++) {
+      const tx = cx + dx, ty = cy + dy;
+      if (tx >= 0 && ty >= 0 && tx < MW && ty < MH && dx * dx + dy * dy <= rt * rt) V[ty * MW + tx] = 2;
+    }
+  };
+  for (const u of G.units) if (u.team === 0 && !u.dead) reveal(u.x, u.y, u.type === 'harv' ? 170 : 230);
+  for (const b of G.blds) if (b.team === 0 && !b.dead) reveal(b.x, b.y, b.type === 'turret' ? 300 : 260);
+}
+const visAt = (x, y) => G.vis[idx(clamp((x / TILE) | 0, 0, MW - 1), clamp((y / TILE) | 0, 0, MH - 1))];
+const seen = e => e.team === 0 || (e.kind === 'b' ? visAt(e.x, e.y) >= 1 : visAt(e.x, e.y) === 2);
+function strikeReady(team) { const T = G.teams[team]; return T.strikeCd <= 0 && hasB(team, 'radar') && !T.low; }
+function callStrike(team, x, y) {
+  if (!strikeReady(team)) return false;
+  G.teams[team].strikeCd = STRIKE_CD;
+  G.strikes.push({ x, y, team, t: 0, n: 0 });
+  if (team === 1) msg('⚠ Düşman hava saldırısı çağırdı!');
+  return true;
+}
+function updateStrikes() {
+  for (const s of G.strikes) {
+    s.t++;
+    if (s.t > 90 && s.t % 8 === 0 && s.n < 9) {
+      s.n++;
+      const a = Math.random() * 6.283, r = Math.random() * 80, bx = s.x + Math.cos(a) * r, by = s.y + Math.sin(a) * r;
+      for (let i = 0; i < 14; i++) puff(bx, by, 5 + Math.random() * 6, Math.random() < 0.5 ? '#f97316' : '#fde047', 3, 26);
+      for (const u of G.units) if (!u.dead && u.team !== s.team && Math.hypot(u.x - bx, u.y - by) < 55) damage(u, 140, null, s.team);
+      for (const b of G.blds) if (!b.dead && b.team !== s.team && distTo({ x: bx, y: by }, b) < 40) damage(b, 110, null, s.team);
+      if (onScreen(bx, by)) snd('boom');
+    }
+    if (s.n >= 9) s.done = true;
+  }
+  G.strikes = G.strikes.filter(s => !s.done);
+}
+
 /* ---------------- ana güncelleme ---------------- */
 function update() {
   G.tick++;
   for (const u of G.units) if (!u.dead) updateUnit(u);
   for (const b of G.blds) if (!b.dead) updateBuilding(b);
   separate();
-  updateBullets();
+  updateBullets(); updateStrikes();
+  if (G.tick % 4 === 0) updateFog();
+  for (const T of G.teams) if (T.strikeCd > 0) T.strikeCd--;
   for (const p of G.parts) { p.x += p.vx; p.y += p.vy; p.life--; }
   G.parts = G.parts.filter(p => p.life > 0);
   for (const T of G.teams) prodTick(T);
@@ -536,9 +587,9 @@ const onScreen = (x, y) => x > cam.x - 40 && y > cam.y - 40 && x < cam.x + canva
 
 function pickEntity(wx, wy, team) {
   let best = null, bd = 1e9;
-  for (const u of G.units) if (!u.dead && (team === undefined || u.team === team)) { const d = Math.hypot(u.x - wx, u.y - wy); if (d < u.r + 5 && d < bd) { bd = d; best = u; } }
+  for (const u of G.units) if (!u.dead && (team === undefined || u.team === team) && seen(u)) { const d = Math.hypot(u.x - wx, u.y - wy); if (d < u.r + 5 && d < bd) { bd = d; best = u; } }
   if (best) return best;
-  for (const b of G.blds) if (!b.dead && (team === undefined || b.team === team) && wx >= b.tx * TILE && wx < (b.tx + b.w) * TILE && wy >= b.ty * TILE && wy < (b.ty + b.h) * TILE) return b;
+  for (const b of G.blds) if (!b.dead && (team === undefined || b.team === team) && seen(b) && wx >= b.tx * TILE && wx < (b.tx + b.w) * TILE && wy >= b.ty * TILE && wy < (b.ty + b.h) * TILE) return b;
   return null;
 }
 function myUnits() { return G.sel.filter(e => e.kind === 'u' && e.team === 0); }
@@ -571,10 +622,11 @@ canvas.addEventListener('mousedown', e => {
   const r = canvas.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, w = screenToWorld(x, y);
   if (e.button === 0) {
     if (G.placing) { const tx = (w.x / TILE) | 0, ty = (w.y / TILE) | 0; if (placeBuilding(0, tx, ty)) G.placing = null; return; }
+    if (G.targeting) { callStrike(0, w.x, w.y); G.targeting = false; return; }
     if (amoveMode) { issueOrder(w.x, w.y); amoveMode = false; return; }
     mouse.down = true; mouse.dx = x; mouse.dy = y;
   } else if (e.button === 2) {
-    if (G.placing) { G.placing = null; return; }
+    if (G.placing || G.targeting) { G.placing = null; G.targeting = false; return; }
     amoveMode = false; issueOrder(w.x, w.y);
   }
 });
@@ -607,7 +659,7 @@ window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
   keys[k] = true;
   if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
-  if (k === 'escape') { G.placing = null; amoveMode = false; }
+  if (k === 'escape') { G.placing = null; G.targeting = false; amoveMode = false; }
   else if (k === 'p') paused = !paused;
   else if (k === 'a' && myUnits().length) amoveMode = true;
   else if (k === 's') { for (const u of myUnits()) { u.order = null; u.path = []; } }
@@ -635,6 +687,12 @@ function buildUI() {
   };
   for (const t of STRUCTS) mk(t, BDEF[t], $('bld'), true);
   for (const t of UNITS) mk(t, UDEF[t], $('unt'), false);
+  const el = document.createElement('div');
+  el.className = 'btn';
+  el.innerHTML = '<div class="n">Hava Saldırısı</div><div class="c">Radar gerekir</div><div class="s"></div><div class="p"></div>';
+  el.addEventListener('click', () => { if (started && !G.over) { if (strikeReady(0)) { G.targeting = true; G.placing = null; msg('Hedefe tıkla (sağ tık iptal)'); } else msg('Hava saldırısı hazır değil (radar / bekleme / güç)'); } });
+  $('spc').appendChild(el);
+  btnEls.strike = { el, s: el.querySelector('.s'), p: el.querySelector('.p') };
 }
 function clickStruct(type) {
   const T = G.teams[0];
@@ -663,6 +721,11 @@ function updateUI() {
     e.s.textContent = mine ? (p.ready ? 'HAZIR' : '') : '';
     e.p.style.width = mine ? Math.min(100, (p.p / BDEF[t].time) * 100) + '%' : '0';
   }
+  { const e = btnEls.strike, ok = strikeReady(0);
+    e.el.classList.toggle('dis', !hasB(0, 'radar'));
+    e.el.classList.toggle('ready', ok);
+    e.s.textContent = ok ? 'HAZIR' : T.strikeCd > 0 ? Math.ceil(T.strikeCd / 60) + 's' : '';
+    e.p.style.width = (100 - (T.strikeCd / STRIKE_CD) * 100) + '%'; }
   for (const t of UNITS) {
     const e = btnEls[t], d = UDEF[t], q = T.q[d.from], n = q.filter(i => i.type === t).length;
     e.el.classList.toggle('dis', !hasB(0, d.from));
@@ -712,6 +775,7 @@ function drawBuilding(b) {
     case 'refinery': ctx.fillRect(x + 6, y + 6, w * 0.45, h - 12); ctx.fillStyle = '#9ca3af'; ctx.beginPath(); ctx.arc(x + w * 0.72, cy, h * 0.3, 0, 6.283); ctx.fill(); ctx.fillStyle = '#facc15'; ctx.fillRect(x + w * 0.72 - 3, cy - 3, 6, 6); break;
     case 'barracks': for (let i = 0; i < 4; i++) ctx.fillRect(x + 7, y + 8 + i * 13, w - 14, 7); break;
     case 'factory': ctx.fillRect(x + 8, y + 8, w - 16, h - 16); ctx.fillStyle = '#111827'; ctx.fillRect(x + 14, y + h - 30, w - 28, 22); ctx.fillStyle = tc; ctx.fillRect(x + 14, y + 12, w - 28, 6); break;
+    case 'radar': ctx.fillRect(x + 6, y + 6, w - 12, h - 12); ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, 14, 0.4 + G.tick / 40, 3.6 + G.tick / 40); ctx.stroke(); ctx.fillStyle = '#4ade80'; ctx.fillRect(cx - 2, cy - 2, 4, 4); break;
     case 'turret': ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(cx, cy, 10, 0, 6.283); ctx.fill(); ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(b.angle) * 16, cy + Math.sin(b.angle) * 16); ctx.stroke(); break;
   }
   if (b.team === 1 || b.hp < b.maxhp || G.sel.includes(b)) hpBar(x, y - 7, w, b.hp / b.maxhp);
@@ -743,7 +807,7 @@ function drawUnit(u) {
 function draw() {
   const W = canvas.width, H = canvas.height;
   drawTerrain();
-  for (const b of G.blds) if (!b.dead && onScreen(b.x, b.y) || b.w > 1) drawBuilding(b);
+  for (const b of G.blds) if (!b.dead && seen(b)) drawBuilding(b);
   if (G.placing) {
     const d = BDEF[G.placing.type], w = screenToWorld(mouse.x, mouse.y), tx = Math.floor(w.x / TILE - (d.w - 1) / 2 + 0.5 - 0.5), ty = Math.floor(w.y / TILE - (d.h - 1) / 2 + 0.5 - 0.5);
     G.placing.tx = tx; G.placing.ty = ty;
@@ -751,10 +815,13 @@ function draw() {
     ctx.fillStyle = ok ? 'rgba(74,222,128,.45)' : 'rgba(239,68,68,.45)'; ctx.fillRect(tx * TILE - cam.x, ty * TILE - cam.y, d.w * TILE, d.h * TILE);
     ctx.strokeStyle = ok ? '#4ade80' : '#ef4444'; ctx.lineWidth = 2; ctx.strokeRect(tx * TILE - cam.x, ty * TILE - cam.y, d.w * TILE, d.h * TILE);
   }
-  for (const u of G.units) drawUnit(u);
-  for (const b of G.bullets) { ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(b.x - cam.x, b.y - cam.y, b.splash ? 3.5 : 2.5, 0, 6.283); ctx.fill(); }
+  for (const u of G.units) if (seen(u)) drawUnit(u);
+  for (const b of G.bullets) if (visAt(b.x, b.y) === 2 || b.team === 0) { ctx.fillStyle = '#fef08a'; ctx.beginPath(); ctx.arc(b.x - cam.x, b.y - cam.y, b.splash ? 3.5 : 2.5, 0, 6.283); ctx.fill(); }
   for (const p of G.parts) { ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.col; const s = p.size * (0.5 + 0.5 * p.life / p.max); ctx.fillRect(p.x - cam.x - s / 2, p.y - cam.y - s / 2, s, s); }
   ctx.globalAlpha = 1;
+  drawFog();
+  for (const s of G.strikes) { const a = 0.35 + 0.25 * Math.sin(G.tick / 4); ctx.strokeStyle = `rgba(239,68,68,${a + 0.3})`; ctx.fillStyle = `rgba(239,68,68,${a * 0.4})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.x - cam.x, s.y - cam.y, 90, 0, 6.283); ctx.fill(); ctx.stroke(); }
+  if (G.targeting) { ctx.strokeStyle = '#f87171'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 90, 0, 6.283); ctx.moveTo(mouse.x - 12, mouse.y); ctx.lineTo(mouse.x + 12, mouse.y); ctx.moveTo(mouse.x, mouse.y - 12); ctx.lineTo(mouse.x, mouse.y + 12); ctx.stroke(); }
   if (mouse.down) {
     const x = Math.min(mouse.dx, mouse.x), y = Math.min(mouse.dy, mouse.y), w = Math.abs(mouse.x - mouse.dx), h = Math.abs(mouse.y - mouse.dy);
     if (w > 4 || h > 4) { ctx.fillStyle = 'rgba(74,222,128,.12)'; ctx.fillRect(x, y, w, h); ctx.strokeStyle = '#4ade80'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w, h); }
@@ -766,6 +833,16 @@ function draw() {
   if (paused) { ctx.fillStyle = '#0008'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.font = '700 32px system-ui'; ctx.fillText('DURAKLATILDI', W / 2 - 105, H / 2 - 16); }
   drawMini();
 }
+function drawFog() {
+  const x0 = Math.max(0, (cam.x / TILE) | 0), y0 = Math.max(0, (cam.y / TILE) | 0);
+  const x1 = Math.min(MW - 1, ((cam.x + canvas.width) / TILE) | 0), y1 = Math.min(MH - 1, ((cam.y + canvas.height) / TILE) | 0);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const v = G.vis[idx(x, y)];
+    if (v === 2) continue;
+    ctx.fillStyle = v === 0 ? '#05080b' : 'rgba(0,0,0,.5)';
+    ctx.fillRect(x * TILE - cam.x, y * TILE - cam.y, TILE + 1, TILE + 1);
+  }
+}
 function prerenderMini() {
   miniTerrain = document.createElement('canvas'); miniTerrain.width = MW; miniTerrain.height = MH;
   const c = miniTerrain.getContext('2d');
@@ -775,9 +852,14 @@ function drawMini() {
   const sw = mini.width / MW, sh = mini.height / MH;
   mctx.imageSmoothingEnabled = false;
   mctx.drawImage(miniTerrain, 0, 0, mini.width, mini.height);
-  for (let i = 0; i < MW * MH; i += 1) if (G.ore[i] > 0) { mctx.fillStyle = '#facc15'; mctx.fillRect((i % MW) * sw, ((i / MW) | 0) * sh, sw, sh); }
-  for (const b of G.blds) { mctx.fillStyle = TEAMCOL[b.team]; mctx.fillRect(b.tx * sw, b.ty * sh, b.w * sw, b.h * sh); }
-  for (const u of G.units) { mctx.fillStyle = TEAMCOL[u.team]; mctx.fillRect((u.x / TILE) * sw - 1, (u.y / TILE) * sh - 1, 3, 3); }
+  for (let i = 0; i < MW * MH; i++) {
+    const v = G.vis[i], px = (i % MW) * sw, py = ((i / MW) | 0) * sh;
+    if (v === 0) { mctx.fillStyle = '#000'; mctx.fillRect(px, py, sw + 0.5, sh + 0.5); }
+    else if (G.ore[i] > 0) { mctx.fillStyle = '#facc15'; mctx.fillRect(px, py, sw, sh); }
+    if (v === 1) { mctx.fillStyle = 'rgba(0,0,0,.45)'; mctx.fillRect(px, py, sw + 0.5, sh + 0.5); }
+  }
+  for (const b of G.blds) if (seen(b)) { mctx.fillStyle = TEAMCOL[b.team]; mctx.fillRect(b.tx * sw, b.ty * sh, b.w * sw, b.h * sh); }
+  for (const u of G.units) if (seen(u)) { mctx.fillStyle = TEAMCOL[u.team]; mctx.fillRect((u.x / TILE) * sw - 1, (u.y / TILE) * sh - 1, 3, 3); }
   mctx.strokeStyle = '#fff'; mctx.lineWidth = 1;
   mctx.strokeRect((cam.x / WW) * mini.width, (cam.y / WH) * mini.height, (canvas.width / WW) * mini.width, (canvas.height / WH) * mini.height);
 }
