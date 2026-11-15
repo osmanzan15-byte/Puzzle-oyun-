@@ -8,7 +8,7 @@
 </head>
 <body>
 <div id="app">
-  <canvas id="game"></canvas>
+  <div id="view"><canvas id="game"></canvas><canvas id="hud"></canvas></div>
   <aside id="side">
     <canvas id="mini" width="220" height="165"></canvas>
     <div id="stats">
@@ -25,9 +25,9 @@
     <div id="help">
       <b>Sol tık:</b> seç / sürükle kutu seç<br>
       <b>Sağ tık:</b> hareket / saldırı / maden<br>
-      <b>Radar</b> → hava saldırısı<br><b>A</b> + tık: saldırarak ilerle · <b>S</b> dur · <b>X</b> sat<br>
+      <b>Radar</b> → hava saldırısı · <b>Hava Pisti</b> → helikopter, bombardıman<br><b>A</b> + tık: saldırarak ilerle · <b>S</b> dur · <b>X</b> sat<br>
       <b>Ctrl+1-9</b> grup · <b>H</b> üsse git · <b>P</b> duraklat<br>
-      Ok tuşları / ekran kenarı / mini harita: kaydır
+      Ok tuşları / ekran kenarı: kaydır · <b>Q/E</b> döndür · tekerlek: yakınlaştır
     </div>
   </aside>
 </div>
@@ -70,6 +70,7 @@
     <button id="ovMenu" class="ghost">Ana Menü</button>
   </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

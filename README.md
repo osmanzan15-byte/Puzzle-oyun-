@@ -10,10 +10,12 @@ Seviyeli blok bulmaca oyunu (tarayıcıda çalışır, derleme gerekmez).
 
 ## Çelik Cephe (RTS)
 
-`celik-cephe/index.html` dosyasını açın. Orijinal, tarayıcıda çalışan gerçek zamanlı strateji oyunu:
+`celik-cephe/index.html` dosyasını açın (3D çizim için Three.js CDN'den yüklenir, internet gerekir). Orijinal, tarayıcıda çalışan 3 boyutlu gerçek zamanlı strateji oyunu:
 
 - Ana üs, santral, rafineri, kışla, fabrika ve taret kur; güç yetmezse üretim yavaşlar.
 - Toplayıcılar maden toplayıp rafineriye taşır (kredi).
+- 3D sahne: Q/E ile döndür, fare tekerleği ile yakınlaştır.
+- Hava Pisti (radar gerekir): Helikopter (hem havaya hem yere vurur) ve Bombardıman (bomba atar, pistte yeniden dolar). Tank havaya vuramaz; piyade, roketatar, taret ve helikopter vurabilir.
 - Piyade, roketatar, tank üret; A* yol bulma, otomatik hedef alma.
 - Yapay zekâ rakip ekonomi kurar ve büyüyen saldırı dalgaları gönderir.
 - Savaş sisi: harita birimlerinle keşfedildikçe açılır, düşman görüş alanın dışında gizlenir.
