@@ -22,6 +22,12 @@ const UDEF = {
 };
 const STRUCTS = ['power', 'refinery', 'barracks', 'factory', 'radar', 'turret'];
 const STRIKE_CD = 5400;
+const DIFFS = {
+  easy:   { name: 'Kolay',  income: 0.7, wave: 5400, size: 5, credits: 1800, desc: 'Rakip yavaş büyür, saldırıları seyrek ve küçük gelir.' },
+  normal: { name: 'Normal', income: 1.0, wave: 3600, size: 6, credits: 2500, desc: 'Dengeli rakip: eşit gelir, düzenli saldırı dalgaları.' },
+  hard:   { name: 'Zor',    income: 1.35, wave: 2400, size: 8, credits: 3500, desc: 'Rakip daha çok kazanır, erken ve büyük saldırılar yapar.' },
+};
+let diff = 'normal';
 const UNITS = ['inf', 'rocket', 'tank', 'harv'];
 
 const $ = id => document.getElementById(id);
@@ -64,6 +70,7 @@ function newGame() {
         occ: new Uint8Array(MW * MH), teams: [mkTeam(0), mkTeam(1)], sel: [], nextId: 1, over: null, placing: null,
         groups: {}, msgs: [], rnd, vis: new Uint8Array(MW * MH), strikes: [], targeting: false };
   genMap(rnd);
+  G.teams[1].credits = DIFFS[diff].credits; G.teams[1].ai.next = DIFFS[diff].wave; G.teams[1].ai.size = DIFFS[diff].size;
   const P = { x: 8, y: 44 }, E = { x: 68, y: 12 };
   setupBase(0, P.x, P.y, 1);
   setupBase(1, E.x, E.y, -1);
@@ -333,7 +340,7 @@ function updateHarv(u) {
     const rf = nearestRefinery(u);
     if (!rf) { u.wait = 90; return; }
     if (distTo(u, rf) < TILE * 1.3) {
-      G.teams[u.team].credits += u.load; if (u.team === 0 && u.load) snd('coin');
+      G.teams[u.team].credits += u.load * (u.team === 1 ? DIFFS[diff].income : 1); if (u.team === 0 && u.load) snd('coin');
       u.load = 0; rf.flash = 20; u.state = 'seek'; u.pathSet = false; return;
     }
     if (!u.pathSet) { setGoal(u, (rf.tx + rf.w / 2) * TILE, (rf.ty + rf.h + 0.5) * TILE); u.pathSet = true; }
@@ -498,7 +505,7 @@ function aiTick(T) {
   const army = G.units.filter(u => u.team === id && !u.dead && u.type !== 'harv');
   const A = T.ai;
   if (G.tick >= A.next && army.length >= A.size) {
-    A.wave++; A.size += 2; A.next = G.tick + 3000;
+    A.wave++; A.size += 2; A.next = G.tick + DIFFS[diff].wave * 0.8;
     for (const u of army) u.wave = true;
     msg('⚠ Düşman saldırı dalgası yaklaşıyor!');
   }
@@ -574,6 +581,7 @@ function update() {
 function msg(text) { G.msgs.push({ text, t: G.tick }); }
 function endGame(r) {
   G.over = r;
+  if (r === 'win') { try { const k = 'celik_wins_' + diff; localStorage.setItem(k, (+localStorage.getItem(k) || 0) + 1); } catch (e) { /* yok */ } }
   $('ovTitle').textContent = r === 'win' ? 'ZAFER!' : 'YENİLGİ';
   $('ovText').innerHTML = r === 'win' ? 'Kızıl Pakt\'ın üssünü yok ettin.' : 'Üssün yok edildi.';
   $('ovBtn').textContent = 'Tekrar Oyna';
@@ -890,13 +898,53 @@ function frame(ts) {
   requestAnimationFrame(frame);
 }
 
-$('ovBtn').addEventListener('click', () => {
+function startGame() {
   started = true; paused = false; amoveMode = false;
+  $('menu').classList.add('hide'); $('overlay').classList.add('hide');
   resize(); newGame();
-  $('overlay').classList.add('hide');
-});
+}
+function showMenu() {
+  started = false; $('overlay').classList.add('hide'); $('menu').classList.remove('hide');
+  refreshMenu(); menuLoop();
+}
+function refreshMenu() {
+  document.querySelectorAll('#diffs button').forEach(b => b.classList.toggle('on', b.dataset.d === diff));
+  $('diffDesc').textContent = DIFFS[diff].desc;
+  let t = [];
+  try { for (const k of Object.keys(DIFFS)) t.push(DIFFS[k].name + ': ' + (+localStorage.getItem('celik_wins_' + k) || 0)); } catch (e) { /* yok */ }
+  $('wins').textContent = t.length ? '🏆 Zaferler — ' + t.join(' · ') : '';
+}
+document.querySelectorAll('#diffs button').forEach(b => b.addEventListener('click', () => { diff = b.dataset.d; refreshMenu(); }));
+$('startBtn').addEventListener('click', startGame);
+$('ovBtn').addEventListener('click', startGame);
+$('ovMenu').addEventListener('click', showMenu);
+$('howBtn').addEventListener('click', () => { $('mainPanel').classList.add('hide'); $('howPanel').classList.remove('hide'); });
+$('backBtn').addEventListener('click', () => { $('howPanel').classList.add('hide'); $('mainPanel').classList.remove('hide'); });
+
+/* menü arka planı: hareketli ızgara ve süzülen birlikler */
+const mbg = $('menuBg'), mg = mbg.getContext('2d');
+const mUnits = Array.from({ length: 14 }, (_, i) => ({ x: Math.random() * 1600, y: Math.random() * 900, s: 0.4 + Math.random() * 1.2, team: i % 2, big: Math.random() < 0.4 }));
+function menuLoop() {
+  if (started || $('menu').classList.contains('hide')) return;
+  const W = mbg.width = mbg.clientWidth, H = mbg.height = mbg.clientHeight, t = performance.now() / 1000;
+  const g = mg.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0b1420'); g.addColorStop(1, '#16251a');
+  mg.fillStyle = g; mg.fillRect(0, 0, W, H);
+  mg.strokeStyle = 'rgba(56,189,248,.07)'; mg.lineWidth = 1;
+  const off = (t * 14) % 48;
+  for (let x = -48 + off; x < W; x += 48) { mg.beginPath(); mg.moveTo(x, 0); mg.lineTo(x, H); mg.stroke(); }
+  for (let y = -48 + off; y < H; y += 48) { mg.beginPath(); mg.moveTo(0, y); mg.lineTo(W, y); mg.stroke(); }
+  for (const u of mUnits) {
+    u.x += u.s * (u.team ? -1 : 1); if (u.x > W + 40) u.x = -40; if (u.x < -40) u.x = W + 40;
+    const y = (u.y % H), sz = u.big ? 14 : 8;
+    mg.fillStyle = TEAMCOL[u.team] + '99'; mg.fillRect(u.x - sz, y - sz * 0.7, sz * 2, sz * 1.4);
+    mg.fillStyle = '#0008'; mg.fillRect(u.x - 2, y - 2, sz + 4, 4);
+  }
+  requestAnimationFrame(menuLoop);
+}
 buildUI();
 resize();
+refreshMenu();
+menuLoop();
 // geliştirme/test için
 window.__celik = { get G() { return G; } };
 requestAnimationFrame(frame);

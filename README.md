@@ -19,4 +19,5 @@ Seviyeli blok bulmaca oyunu (tarayıcıda çalışır, derleme gerekmez).
 - Savaş sisi: harita birimlerinle keşfedildikçe açılır, düşman görüş alanın dışında gizlenir.
 - Radar binası hava saldırısı özel gücünü açar (90 sn bekleme); yapay zekâ da kullanır.
 - Mini harita, kutu seçim, kontrol grupları (Ctrl+1-9), saldırarak ilerle (A), sat (X).
+- Giriş ekranı: zorluk seçimi (Kolay / Normal / Zor), nasıl oynanır, zafer sayacı (tarayıcıda saklanır).
 - Kazanmak için rakibin tüm yapılarını yok et.

@@ -31,11 +31,43 @@
     </div>
   </aside>
 </div>
-<div id="overlay">
+<div id="menu">
+  <canvas id="menuBg"></canvas>
+  <div class="mwrap">
+    <div class="logo">ÇELİK<span>CEPHE</span></div>
+    <div class="tag">Üssünü kur · Madeni topla · Ordunu yönet</div>
+    <div class="panel" id="mainPanel">
+      <div class="lbl">Zorluk</div>
+      <div class="diffs" id="diffs">
+        <button data-d="easy">Kolay</button>
+        <button data-d="normal" class="on">Normal</button>
+        <button data-d="hard">Zor</button>
+      </div>
+      <div class="dd" id="diffDesc"></div>
+      <button class="primary" id="startBtn">▶ Oyuna Başla</button>
+      <button class="ghost" id="howBtn">Nasıl Oynanır?</button>
+      <div class="wins" id="wins"></div>
+    </div>
+    <div class="panel hide" id="howPanel">
+      <div class="lbl">Nasıl Oynanır?</div>
+      <ol>
+        <li><b>Santral</b> kur, ardından <b>Rafineri</b>. Toplayıcılar altın madenini kredi yapar.</li>
+        <li><b>Kışla</b> ve <b>Fabrika</b> ile Piyade, Roketatar ve Tank üret.</li>
+        <li>Sol tık / kutu ile birlik seç, <b>sağ tık</b> ile hareket ve saldırı emri ver.</li>
+        <li><b>Radar</b> kurunca hava saldırısı özel gücü açılır.</li>
+        <li>Haritayı keşfettikçe sis açılır. Rakibin tüm yapılarını yok et!</li>
+      </ol>
+      <button class="ghost" id="backBtn">← Geri</button>
+    </div>
+    <div class="foot">Kısayollar: A saldır · S dur · X sat · H üsse git · P duraklat · M ses</div>
+  </div>
+</div>
+<div id="overlay" class="hide">
   <div class="box">
-    <h1 id="ovTitle">ÇELİK CEPHE</h1>
-    <p id="ovText">Mavi Birlik olarak kızıl rakibin üssünü yok et.<br>Maden topla, santral ve rafineri kur, ordunu üret.</p>
-    <button id="ovBtn">Oyuna Başla</button>
+    <h1 id="ovTitle">ZAFER!</h1>
+    <p id="ovText"></p>
+    <button id="ovBtn">Tekrar Oyna</button>
+    <button id="ovMenu" class="ghost">Ana Menü</button>
   </div>
 </div>
 <script src="game.js"></script>

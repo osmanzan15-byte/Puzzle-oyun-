@@ -28,3 +28,28 @@ h4{margin:8px 2px 4px;color:#7c8da1;font-size:11px;letter-spacing:.08em;text-tra
 .box button{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:11px 26px;font-size:15px;font-weight:600;cursor:pointer}
 .box button:hover{background:#3b82f6}
 @media(max-width:700px){#side{width:190px}#mini{width:174px;height:130px}}
+
+#menu{position:fixed;inset:0;z-index:20;background:#070b10;display:flex;align-items:center;justify-content:center;overflow:auto}
+#menu.hide{display:none}
+#menuBg{position:absolute;inset:0;width:100%;height:100%}
+.mwrap{position:relative;text-align:center;padding:24px 16px;width:100%;max-width:460px}
+.logo{font-size:56px;font-weight:900;letter-spacing:.16em;color:#e2e8f0;line-height:1;text-shadow:0 4px 24px #0008}
+.logo span{display:block;font-size:44px;letter-spacing:.34em;color:#38bdf8;margin-top:6px;text-shadow:0 0 28px #0ea5e9aa}
+.tag{margin:14px 0 22px;color:#94a3b8;letter-spacing:.06em}
+.panel{background:rgba(19,26,34,.88);backdrop-filter:blur(4px);border:2px solid #33445a;border-radius:14px;padding:20px 22px;text-align:left}
+.panel.hide{display:none}
+.lbl{color:#7c8da1;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.diffs{display:flex;gap:8px}
+.diffs button{flex:1;background:#1d2733;color:#cbd5e1;border:1px solid #33445a;border-radius:8px;padding:9px 0;font-size:14px;font-weight:600;cursor:pointer}
+.diffs button.on{background:#0369a1;border-color:#38bdf8;color:#fff}
+.dd{color:#94a3b8;font-size:12px;min-height:34px;margin:10px 0 14px}
+.primary{width:100%;background:#2563eb;color:#fff;border:0;border-radius:10px;padding:13px;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.primary:hover{background:#3b82f6}
+.ghost{width:100%;background:transparent;color:#cbd5e1;border:1px solid #33445a;border-radius:10px;padding:9px;font-size:14px;cursor:pointer}
+.ghost:hover{border-color:#5b8def}
+.wins{margin-top:12px;text-align:center;color:#64748b;font-size:12px}
+.panel ol{padding-left:18px;color:#b6c2d1;font-size:13px;line-height:1.6;margin-bottom:14px}
+.panel ol b{color:#7dd3fc}
+.foot{margin-top:16px;color:#4b5a6c;font-size:11px}
+.box .ghost{margin-top:10px}
+@media(max-width:480px){.logo{font-size:38px}.logo span{font-size:30px}}
