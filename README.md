@@ -14,7 +14,9 @@ Seviyeli blok bulmaca oyunu (tarayıcıda çalışır, derleme gerekmez).
 
 - Ana üs, santral, rafineri, kışla, fabrika ve taret kur; güç yetmezse üretim yavaşlar.
 - Toplayıcılar maden toplayıp rafineriye taşır (kredi).
-- 3D sahne: Q/E ile döndür, fare tekerleği ile yakınlaştır.
+- Gerçekçi 3D sahne: güneş ışığı ve gerçek zamanlı gölgeler, gökyüzü, dokulu arazi, çam ağaçları, kıyılar, ayrıntılı bina ve birim modelleri.
+- Savaş efektleri: namlu alevi ve geri tepme, iz bırakan mermiler, duman, ateş, yanık izleri, yıkıntılar, toz izleri; piyade yürüme animasyonu.
+- Q/E ile döndür, fare tekerleği ile yakınlaştır.
 - Hava Pisti (radar gerekir): Helikopter (hem havaya hem yere vurur) ve Bombardıman (bomba atar, pistte yeniden dolar). Tank havaya vuramaz; piyade, roketatar, taret ve helikopter vurabilir.
 - Piyade, roketatar, tank üret; A* yol bulma, otomatik hedef alma.
 - Yapay zekâ rakip ekonomi kurar ve büyüyen saldırı dalgaları gönderir.
