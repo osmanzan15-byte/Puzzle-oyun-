@@ -1,0 +1,30 @@
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b0f14;color:#e5e7eb;font:13px/1.35 system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden;user-select:none}
+#app{display:flex;height:100%}
+#game{flex:1;min-width:0;display:block;cursor:default;background:#1a2a14}
+#side{width:244px;flex:none;background:#131a22;border-left:2px solid #263241;padding:8px;overflow-y:auto}
+#mini{width:228px;height:171px;display:block;background:#000;border:2px solid #2c3a4b;cursor:crosshair}
+#stats{display:flex;justify-content:space-between;margin:8px 2px;font-size:15px}
+#stats b.low{color:#f87171}
+#info{background:#0e141b;border:1px solid #263241;border-radius:6px;padding:6px 8px;min-height:44px;color:#9fb0c3;margin-bottom:6px}
+h4{margin:8px 2px 4px;color:#7c8da1;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.btn{position:relative;overflow:hidden;background:#1d2733;border:1px solid #33445a;border-radius:6px;padding:6px 6px 5px;cursor:pointer;min-height:48px}
+.btn:hover{border-color:#5b8def}
+.btn .n{font-weight:600;font-size:12px}
+.btn .c{color:#facc15;font-size:11px}
+.btn .s{position:absolute;right:5px;top:4px;font-size:10px;color:#86efac;font-weight:700}
+.btn .p{position:absolute;left:0;bottom:0;height:4px;width:0;background:#38bdf8}
+.btn.dis{opacity:.4;cursor:not-allowed}
+.btn.ready{border-color:#4ade80;animation:pulse 1s infinite}
+@keyframes pulse{50%{background:#1f3b2b}}
+#help{margin-top:10px;color:#64748b;font-size:11px;line-height:1.55}
+#help b{color:#94a3b8}
+#overlay{position:fixed;inset:0;background:rgba(5,8,12,.78);display:flex;align-items:center;justify-content:center;z-index:10}
+#overlay.hide{display:none}
+.box{background:#131a22;border:2px solid #33445a;border-radius:12px;padding:28px 36px;text-align:center;max-width:460px}
+.box h1{font-size:34px;letter-spacing:.12em;margin-bottom:12px;color:#7dd3fc}
+.box p{color:#a5b4c6;margin-bottom:20px;font-size:14px}
+.box button{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:11px 26px;font-size:15px;font-weight:600;cursor:pointer}
+.box button:hover{background:#3b82f6}
+@media(max-width:700px){#side{width:190px}#mini{width:174px;height:130px}}

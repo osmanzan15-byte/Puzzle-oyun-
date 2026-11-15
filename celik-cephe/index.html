@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Çelik Cephe</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+  <aside id="side">
+    <canvas id="mini" width="220" height="165"></canvas>
+    <div id="stats">
+      <span title="Kredi">💰 <b id="cr">0</b></span>
+      <span title="Güç (kullanılan / üretilen)">⚡ <b id="pw">0/0</b></span>
+    </div>
+    <div id="info">Birim seçilmedi</div>
+    <h4>Yapılar</h4>
+    <div id="bld" class="grid"></div>
+    <h4>Birlikler</h4>
+    <div id="unt" class="grid"></div>
+    <div id="help">
+      <b>Sol tık:</b> seç / sürükle kutu seç<br>
+      <b>Sağ tık:</b> hareket / saldırı / maden<br>
+      <b>A</b> + tık: saldırarak ilerle · <b>S</b> dur · <b>X</b> sat<br>
+      <b>Ctrl+1-9</b> grup · <b>H</b> üsse git · <b>P</b> duraklat<br>
+      Ok tuşları / ekran kenarı / mini harita: kaydır
+    </div>
+  </aside>
+</div>
+<div id="overlay">
+  <div class="box">
+    <h1 id="ovTitle">ÇELİK CEPHE</h1>
+    <p id="ovText">Mavi Birlik olarak kızıl rakibin üssünü yok et.<br>Maden topla, santral ve rafineri kur, ordunu üret.</p>
+    <button id="ovBtn">Oyuna Başla</button>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
